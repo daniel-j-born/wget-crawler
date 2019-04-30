@@ -1,17 +1,20 @@
 #!/bin/bash
 
 function die() {
-  echo $@ 1>&2
+  echo -e $@ 1>&2
   exit 1
 }
 
-if [[ -z "$CRAWL_DOMAIN" -o -z "$CRAWL_START" ]]; then
-  die "Set CRAWL_DOMAIN and CRAWL_START in the environment"
+if [[ -z "$CRAWL_DOMAIN" || -z "$CRAWL_START" ]]; then
+  die "Set CRAWL_DOMAIN and CRAWL_START in the environment.\nExample usage:\nCRAWL_DOMAIN=example.com CRAWL_START=http://example.com/start.html CRAWL_WAIT=10 $0 >& /tmp/crawler.log &"
 fi
   
 # Seconds or labeled units. Randomized to 0.5*$WAIT to 1.5*$WAIT
-# with --random-wait option.
-WAIT=3m
+# with --random-wait option. If not specified already, use a very
+# value.
+if [[ -z "$CRAWL_WAIT" ]]; then
+  CRAWL_WAIT=3m
+fi
 
 wget \
   --no-verbose \
@@ -23,7 +26,7 @@ wget \
   --timestamping \
   --page-requisites \
   --adjust-extension \
-  --wait "$WAIT" \
+  --wait "$CRAWL_WAIT" \
   --random-wait \
   --convert-links \
   --domains "$CRAWL_DOMAIN" \
