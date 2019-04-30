@@ -1,0 +1,30 @@
+#!/bin/bash
+
+function die() {
+  echo $@ 1>&2
+  exit 1
+}
+
+if [[ -z "$CRAWL_DOMAIN" -o -z "$CRAWL_START" ]]; then
+  die "Set CRAWL_DOMAIN and CRAWL_START in the environment"
+fi
+  
+# Seconds or labeled units. Randomized to 0.5*$WAIT to 1.5*$WAIT
+# with --random-wait option.
+WAIT=3m
+
+wget \
+  --no-verbose \
+  --output-file=/dev/stderr \
+  --mirror \
+  --recursive \
+  --execute robots=off \
+  --user-agent='Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/52.0.2725.0 Safari/537.36' \
+  --timestamping \
+  --page-requisites \
+  --adjust-extension \
+  --wait "$WAIT" \
+  --random-wait \
+  --convert-links \
+  --domains "$CRAWL_DOMAIN" \
+    "$CRAWL_START"
