@@ -1,33 +1,52 @@
 #!/bin/bash
+#
+# Use wget to mirror a directory.
+#
 
-function die() {
-  echo -e $@ 1>&2
+function die {
+  echo "$@" 1>&2
   exit 1
 }
 
-if [[ -z "$CRAWL_DOMAIN" || -z "$CRAWL_START" ]]; then
-  die "Set CRAWL_DOMAIN and CRAWL_START in the environment.\nExample usage:\nCRAWL_DOMAIN=example.com CRAWL_START=http://example.com/start.html CRAWL_WAIT=10 $0 >& /tmp/crawler.log &"
+function usage_die {
+  die "$(cat <<USAGE
+Usage: $(basename $0) [<wget options>] <start>
+Examples:
+$(basename $0) https://www.example.com/dir/
+  or
+$(basename $0) https://www.example.com/start.html
+USAGE
+)"
+}
+
+if [[ -z "$1" ]]; then
+  usage_die
 fi
-  
-# Seconds or labeled units. Randomized to 0.5*$WAIT to 1.5*$WAIT
-# with --random-wait option. If not specified already, use a very
-# value.
+
+#CRAWL_DOMAIN=$(sed -n 's|^.*://\([^/]*\).*$|\1|p' <<<"$CRAWL_START")
+#if [[ -z "$CRAWL_DOMAIN" ]]; then
+#  usage_die
+#fi
+#--domains "$CRAWL_DOMAIN"
+
+# Seconds or labeled units. Randomized to 0.5*$WAIT to 1.5*$WAIT with
+# --random-wait option. If not specified already, use a very conservative value.
 if [[ -z "$CRAWL_WAIT" ]]; then
   CRAWL_WAIT=3m
 fi
 
 wget \
-  --no-verbose \
-  --output-file=/dev/stderr \
-  --mirror \
   --recursive \
+  --level=inf \
+  --no-timestamping \
+  --no-clobber \
+  --no-remove-listing \
+  --verbose \
+  --no-parent \
+  --output-file=/dev/stderr \
   --execute robots=off \
   --user-agent='Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/52.0.2725.0 Safari/537.36' \
-  --timestamping \
   --page-requisites \
-  --adjust-extension \
   --wait "$CRAWL_WAIT" \
   --random-wait \
-  --convert-links \
-  --domains "$CRAWL_DOMAIN" \
-    "$CRAWL_START"
+    "$@"
